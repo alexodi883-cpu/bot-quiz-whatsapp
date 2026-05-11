@@ -1,61 +1,27 @@
-const express = require("express");
+const express = require('express');
+const Airtable = require('airtable');
 const app = express();
-const port = process.env.PORT || 3001;
+app.use(express.json());
 
-app.get("/", (req, res) => res.type('html').send(html));
+const base = new Airtable({apiKey: 'patbA2oI6kDNXbez9.6a8f55dde0f6b807b2b9e2ca1fd8030a085631d5e27ac432fb64dd4b8357967c'}).base('appVwaWNBFeNQuxPq');
 
-const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.post('/webhook', async (req, res) => {
+  const msg = req.body.message?.toLowerCase() || '';
+  try {
+    if (msg.includes('qcm')) {
+      const records = await base('Question_M1').select({filterByFormula: '{Monde} = 1'}).all();
+      if(records.length === 0) return res.json({ reply: "Ajoute des questions dans Airtable frérot" });
+      const q = records[Math.floor(Math.random() * records.length)].fields;
+      const reply = `🌍 *MONDE 1*\n\n*${q.Question}*\n\nA) ${q.Choix1}\nB) ${q.Choix2}\nC) ${q.Choix3}\nD) ${q.Choix4}\n\nRéponds A, B, C ou D`;
+      res.json({ reply });
+    } else {
+      res.json({ reply: "Tape 'qcm' pour commencer 🚀" });
+    }
+  } catch (e) {
+    res.json({ reply: "Erreur Airtable: " + e.message });
+  }
+});
 
-server.keepAliveTimeout = 120 * 1000;
-server.headersTimeout = 120 * 1000;
-
-const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Hello from Render!</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <script>
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          disableForReducedMotion: true
-        });
-      }, 500);
-    </script>
-    <style>
-      @import url("https://p.typekit.net/p.css?s=1&k=vnd5zic&ht=tk&f=39475.39476.39477.39478.39479.39480.39481.39482&a=18673890&app=typekit&e=css");
-      @font-face {
-        font-family: "neo-sans";
-        src: url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
-        font-style: normal;
-        font-weight: 700;
-      }
-      html {
-        font-family: neo-sans;
-        font-weight: 700;
-        font-size: calc(62rem / 16);
-      }
-      body {
-        background: white;
-      }
-      section {
-        border-radius: 1em;
-        padding: 1em;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-right: -50%;
-        transform: translate(-50%, -50%);
-      }
-    </style>
-  </head>
-  <body>
-    <section>
-      Hello from Render!
-    </section>
-  </body>
-</html>
-`
+app.get('/', (req, res) => res.send('Bot Quiz LIVE'));
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log('Bot ready on ' + port));
